@@ -4,10 +4,10 @@ import Clarifai from "clarifai";
 import FaceRecognition from "./components/FaceRecognition/FaceRecognition";
 import Navigation from "./components/Navigation/Navigation";
 import Register from "./components/Register/Register";
+import Signin from "./components/Signin/Signin";
 import Logo from "./components/Logo/Logo";
 import Rank from "./components/Rank/Rank";
 import ImageLinkForm from "./components/ImageLinkForm/ImageLinkForm";
-import Signin from "./components/Signin/Signin";
 import "./App.css";
 import "tachyons";
 
@@ -35,8 +35,27 @@ class App extends Component {
       box: {},
       route: "signin",
       isSignedIn: false,
+      user: {
+        id: "",
+        name: "",
+        email: "",
+        entries: 0,
+        joined: "",
+      },
     };
   }
+
+  loadUser = (data) => {
+    this.setState({
+      user: {
+        id: data.id,
+        name: data.name,
+        email: data.email,
+        entries: data.entries,
+        joined: data.joined,
+      },
+    });
+  };
 
   calculateFaceLocation = (data) => {
     const clarifaiFace =
@@ -99,9 +118,12 @@ class App extends Component {
             <FaceRecognition box={box} imageUrl={imageUrl} />
           </div>
         ) : route === "signin" ? (
-          <Signin onRouteChange={this.onRouteChange} />
+          <Signin loadUser={this.loadUser} onRouteChange={this.onRouteChange} />
         ) : (
-          <Register onRouteChange={this.onRouteChange} />
+          <Register
+            loadUser={this.loadUser}
+            onRouteChange={this.onRouteChange}
+          />
         )}
       </div>
     );

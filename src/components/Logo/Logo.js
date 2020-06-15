@@ -2,7 +2,7 @@ import React from "react";
 import Tilt from "react-tilt";
 import "./Logo.css";
 import brain from "./icon-brain.png";
-import { render } from "@testing-library/react";
+// import { render } from "@testing-library/react";
 
 const Logo = () => {
   return (
