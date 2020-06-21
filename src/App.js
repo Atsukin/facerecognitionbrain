@@ -1,6 +1,5 @@
 import React, { Component } from "react";
 import Particles from "react-particles-js";
-import Clarifai from "clarifai";
 import FaceRecognition from "./components/FaceRecognition/FaceRecognition";
 import Navigation from "./components/Navigation/Navigation";
 import Register from "./components/Register/Register";
@@ -11,14 +10,10 @@ import ImageLinkForm from "./components/ImageLinkForm/ImageLinkForm";
 import "./App.css";
 import "tachyons";
 
-const app = new Clarifai.App({
-  apiKey: "d496a993e7924ac7b10b5ddbad16e2a5",
-});
-
 const particlesOptions = {
   particles: {
     number: {
-      value: 120,
+      value: 30,
       density: {
         enable: true,
         value_area: 800,
@@ -26,23 +21,26 @@ const particlesOptions = {
     },
   },
 };
+
+const initialState = {
+  input: "",
+  imageUrl: "",
+  box: {},
+  route: "signin",
+  isSignedIn: false,
+  user: {
+    id: "",
+    name: "",
+    email: "",
+    entries: 0,
+    joined: "",
+  },
+};
+
 class App extends Component {
   constructor() {
     super();
-    this.state = {
-      input: "",
-      imageUrl: "",
-      box: {},
-      route: "signin",
-      isSignedIn: false,
-      user: {
-        id: "",
-        name: "",
-        email: "",
-        entries: 0,
-        joined: "",
-      },
-    };
+    this.state = initialState;
   }
 
   loadUser = (data) => {
@@ -71,7 +69,7 @@ class App extends Component {
     };
   };
 
-  displayFacebox = (box) => {
+  displayFaceBox = (box) => {
     this.setState({ box: box });
   };
 
@@ -81,21 +79,40 @@ class App extends Component {
 
   onButtonSubmit = () => {
     this.setState({ imageUrl: this.state.input });
-    app.models
-      .predict(Clarifai.FACE_DETECT_MODEL, this.state.input)
-      .then((response) =>
-        this.displayFacebox(this.calculateFaceLocation(response))
-      )
+    fetch("https://fierce-inlet-50890.herokuapp.com/imageurl", {
+      method: "post",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        input: this.state.input,
+      }),
+    })
+      .then((response) => response.json())
+      .then((response) => {
+        if (response) {
+          fetch("https://fierce-inlet-50890.herokuapp.com/image", {
+            method: "put",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              id: this.state.user.id,
+            }),
+          })
+            .then((response) => response.json())
+            .then((count) => {
+              this.setState(Object.assign(this.state.user, { entries: count }));
+            });
+        }
+        this.displayFaceBox(this.calculateFaceLocation(response));
+      })
       .catch((err) => console.log(err));
   };
 
   onRouteChange = (route) => {
-    this.setState({ route: route });
     if (route === "signout") {
-      this.setState({ isSignedIn: false });
+      this.setState(initialState);
     } else if (route === "home") {
       this.setState({ isSignedIn: true });
     }
+    this.setState({ route: route });
   };
 
   render() {
@@ -110,7 +127,10 @@ class App extends Component {
         {route === "home" ? (
           <div>
             <Logo />
-            <Rank />
+            <Rank
+              name={this.state.user.name}
+              entries={this.state.user.entries}
+            />
             <ImageLinkForm
               onInputChange={this.onInputChange}
               onButtonSubmit={this.onButtonSubmit}
@@ -129,4 +149,5 @@ class App extends Component {
     );
   }
 }
+
 export default App;
